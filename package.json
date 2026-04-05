@@ -7,7 +7,7 @@
     "start": "node bot.js"
   },
   "keywords": ["claude", "telegram", "claude-code", "ai", "bot", "anthropic"],
-  "author": "Louis",
+  "author": "Mibayy",
   "license": "ISC",
   "dependencies": {
     "node-telegram-bot-api": "^0.67.0"
