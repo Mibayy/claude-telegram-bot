@@ -1,0 +1,15 @@
+{
+  "name": "claude-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot that gives you mobile access to Claude Code — stream responses, approve tool calls, manage projects",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "keywords": ["claude", "telegram", "claude-code", "ai", "bot", "anthropic"],
+  "author": "Louis",
+  "license": "ISC",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.67.0"
+  }
+}

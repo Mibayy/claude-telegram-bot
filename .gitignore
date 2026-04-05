@@ -1,0 +1,8 @@
+node_modules/
+.env
+.state.json
+memory/
+notes/
+*.tmp
+*.log
+/tmp/
