@@ -1,5 +1,5 @@
 'use strict'
-const { execSync } = require('child_process')
+const { execSync, spawn } = require('child_process')
 
 module.exports = function registerCommands(bot, deps) {
   const { state, processMessage, fmt, agents, memory, notes, reminders, monitor } = deps
@@ -22,6 +22,7 @@ module.exports = function registerCommands(bot, deps) {
       '',
       '<b>Sessions</b>',
       '/new — nouvelle conversation',
+      '/login — lien OAuth pour connecter Claude Code',
       '/clear — reset conversation',
       '/stop — arrêter · /retry — relancer',
       '/compact — reset + résumé contexte',
@@ -76,6 +77,54 @@ module.exports = function registerCommands(bot, deps) {
     state.messageQueues.delete(msg.chat.id)
     state.saveState()
     bot.sendMessage(msg.chat.id, '🆕 Nouvelle conversation.')
+  })
+
+  // ─── /login — get OAuth URL to connect Claude Code to your account ─────────
+  bot.onText(/^\/login(?:\s+(.+))?$/, async (msg, match) => {
+    if (!isAllowed(msg)) return
+    const chatId = msg.chat.id
+    const arg = (match[1] || '').trim()
+    const args = ['auth', 'login']
+    if (arg === 'console') args.push('--console')
+
+    const waitMsg = await bot.sendMessage(chatId, '🔑 Génération du lien de connexion...')
+
+    const proc = spawn('claude', args, {
+      env: { ...process.env, BROWSER: 'echo' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+
+    let output = ''
+    proc.stdout.on('data', d => { output += d.toString() })
+    proc.stderr.on('data', d => { output += d.toString() })
+
+    const timer = setTimeout(() => proc.kill('SIGTERM'), 15000)
+
+    proc.on('close', async () => {
+      clearTimeout(timer)
+      // Extract URL from output
+      const urlMatch = output.match(/(https:\/\/claude\.com\/[^\s]+)/)
+      try { await bot.deleteMessage(chatId, waitMsg.message_id) } catch {}
+
+      if (urlMatch) {
+        bot.sendMessage(chatId, [
+          '🔑 <b>Connexion Claude Code</b>',
+          '',
+          'Ouvre ce lien dans ton navigateur :',
+          `<a href="${fmt.escHtml(urlMatch[1])}">${fmt.escHtml(urlMatch[1].slice(0, 80))}...</a>`,
+          '',
+          'Connecte-toi puis reviens ici.',
+        ].join('\n'), { parse_mode: 'HTML', disable_web_page_preview: true })
+      } else {
+        bot.sendMessage(chatId, '❌ Pas de lien obtenu.\n<pre>' + fmt.escHtml(output.slice(0, 500)) + '</pre>', { parse_mode: 'HTML' })
+      }
+    })
+
+    proc.on('error', async (err) => {
+      clearTimeout(timer)
+      try { await bot.deleteMessage(chatId, waitMsg.message_id) } catch {}
+      bot.sendMessage(chatId, `❌ Erreur: ${err.message}`)
+    })
   })
 
   // ─── /stop ─────────────────────────────────────────────────────────────────
