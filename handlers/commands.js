@@ -107,14 +107,11 @@ module.exports = function registerCommands(bot, deps) {
       try { await bot.deleteMessage(chatId, waitMsg.message_id) } catch {}
 
       if (urlMatch) {
-        bot.sendMessage(chatId, [
-          '🔑 <b>Connexion Claude Code</b>',
-          '',
-          'Ouvre ce lien dans ton navigateur :',
-          `<a href="${fmt.escHtml(urlMatch[1])}">${fmt.escHtml(urlMatch[1].slice(0, 80))}...</a>`,
-          '',
-          'Connecte-toi puis reviens ici.',
-        ].join('\n'), { parse_mode: 'HTML', disable_web_page_preview: true })
+        const url = urlMatch[1]
+        // Send clickable link alone (easy to tap or copy)
+        await bot.sendMessage(chatId, `🔑 <b>Connexion Claude Code</b>\n\nOuvre ce lien :`, { parse_mode: 'HTML' })
+        await bot.sendMessage(chatId, url, { disable_web_page_preview: true })
+        await bot.sendMessage(chatId, `Une fois connecté, copie le code qu'on te donne et colle-le ici avec :\n<code>/login COLLE_LE_CODE_ICI</code>`, { parse_mode: 'HTML' })
       } else {
         bot.sendMessage(chatId, '❌ Pas de lien obtenu.\n<pre>' + fmt.escHtml(output.slice(0, 500)) + '</pre>', { parse_mode: 'HTML' })
       }

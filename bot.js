@@ -39,7 +39,10 @@ state.loadState()
 // ─── Bot Setup ─────────────────────────────────────────────────────────────
 
 const bot = new TelegramBot(TOKEN, {
-  polling: { params: { timeout: 30 }, interval: 1000 }
+  polling: {
+    params: { timeout: 30, allowed_updates: ['message', 'callback_query'] },
+    interval: 1000
+  }
 })
 
 bot.on('polling_error', (err) => {
@@ -49,14 +52,11 @@ bot.on('polling_error', (err) => {
     console.error(`[POLLING] ${err.code} ${err.message} (total: ${state.getPollingErrors()})`)
     state.setLastPollingError(now)
   }
+  // Too many errors → let systemd restart cleanly (no manual stopPolling/startPolling
+  // which causes duplicate long-poll requests and 409 loops)
   if (state.getPollingErrors() > 10 && now - state.getLastPollingError() < 5000) {
-    console.log('[POLLING] Too many errors, restarting in 10s...')
-    bot.stopPolling()
-    setTimeout(() => {
-      state.resetPollingErrors()
-      bot.startPolling()
-      console.log('[POLLING] Polling restarted')
-    }, 10000)
+    console.error('[POLLING] Too many errors, exiting — systemd will restart')
+    process.exit(1)
   }
 })
 bot.on('error', (err) => console.error('[BOT]', err.code, err.message))

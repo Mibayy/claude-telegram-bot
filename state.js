@@ -6,7 +6,7 @@ const path = require('path')
 // ─── Config Constants ──────────────────────────────────────────────────────
 
 const MAX_MSG = 4096
-const CLAUDE_TIMEOUT_MS = 600000       // 10 min
+const CLAUDE_TIMEOUT_MS = 900000       // 15 min
 const APPROVAL_TIMEOUT_TG = 120000     // 2 min for Telegram sessions
 const APPROVAL_TIMEOUT_TERM = 60000    // 1 min for terminal sessions
 const APPROVAL_PORT = parseInt(process.env.APPROVAL_PORT || '3456')
